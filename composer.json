@@ -1,16 +1,28 @@
 {
-    "name": "lb/laravel-fortress2",
-    "autoload": {
-        "psr-4": {
-            "Bausch\\LaravelFortress\\": "src/"
-        }
-    },
-    "require-dev": {
-        "phpunit/phpunit": "4.*"
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Bausch\\LaravelFortress\\Tests\\": "tests/"
-        }
+  "name": "lb/laravel-fortress2",
+  "description": "Resource Based Access Control",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Lorenz Bausch",
+      "email": "info@lorenzbausch.de"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Bausch\\LaravelFortress\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Bausch\\LaravelFortress\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "laravel/framework": "5.1.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.*"
+  },
+  "minimum-stability": "stable"
 }
