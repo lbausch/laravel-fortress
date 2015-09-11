@@ -80,6 +80,19 @@ trait FortressGuardTrait
     }
 
     /**
+     * Has global Permission.
+     *
+     * @param string $permission_name
+     *
+     * @return bool
+     */
+    public function hasGlobalPermission($permission_name)
+    {
+        return $this->callFortressGuard()
+            ->canGlobal($permission_name);
+    }
+
+    /**
      * Can global.
      *
      * @param string $ability
