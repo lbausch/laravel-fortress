@@ -25,12 +25,12 @@ trait FortressGuardTrait
         if (in_array(SoftDeletes::class, class_uses(self::class))) {
             static::deleted(function ($model) {
                 if (!$model->trashed()) {
-                    $model->callFortressGuard()->destroyGrants();
+                    $model->destroyGrants();
                 }
             });
         } else {
             static::deleted(function ($model) {
-                $model->callFortressGuard()->destroyGrants();
+                $model->destroyGrants();
             });
         }
     }
@@ -48,6 +48,17 @@ trait FortressGuardTrait
         }
 
         return $this->fortress_guard;
+    }
+
+    /**
+     * Destroy all Grants.
+     *
+     * @return bool
+     */
+    public function destroyGrants()
+    {
+        return $this->callFortressGuard()
+            ->destroyGrants();
     }
 
     /**
