@@ -67,4 +67,24 @@ class Fortress implements Contracts\Fortress
 
         return $return;
     }
+
+    /**
+     * Get all Models for a specific Resource.
+     *
+     * @param object      $resource
+     * @param string|null $filter_class
+     */
+    public function modelsForResource($resource, $filter_class = null)
+    {
+        $grants = Grant::where('resource_type', get_class($resource))
+            ->where('resource_id', $resource->getKey());
+
+        if (!is_null($filter_class)) {
+            $grants->where('model_type', $filter_class);
+        }
+
+        $grants = $grants->get();
+
+        return $grants;
+    }
 }

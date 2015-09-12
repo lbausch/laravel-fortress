@@ -54,15 +54,15 @@ trait FortressGuardTrait
      * Get granted resources.
      *
      * @param string       $ability
-     * @param string       $policy_class_name
+     * @param string       $model_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($ability, $policy_class_name, Closure $resolver = null)
+    public function myAllowedResources($ability, $model_class_name, Closure $resolver = null)
     {
         return $this->callFortressGuard()
-            ->myAllowedResources($ability, $policy_class_name, $resolver);
+            ->myAllowedResources($ability, $model_class_name, $resolver);
     }
 
     /**

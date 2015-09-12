@@ -31,4 +31,34 @@ class Grant extends Model
     {
         return $this->id;
     }
+
+    /**
+     * Get Model Type.
+     *
+     * @return string
+     */
+    public function getModelType()
+    {
+        return $this->model_type;
+    }
+
+    /**
+     * Get Model Id.
+     *
+     * @return int
+     */
+    public function getModelId()
+    {
+        return $this->model_id;
+    }
+
+    /**
+     * Get Role name.
+     *
+     * @return string
+     */
+    public function getRole()
+    {
+        return $this->role;
+    }
 }
