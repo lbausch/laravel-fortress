@@ -2,6 +2,7 @@
   "name": "lbausch/laravel-fortress",
   "description": "Roles and Permissions for Laravel's Authorization",
   "license": "MIT",
+  "keywords": ["laravel"],
   "authors": [
     {
       "name": "Lorenz Bausch",
