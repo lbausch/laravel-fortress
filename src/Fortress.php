@@ -89,13 +89,13 @@ class Fortress implements Contracts\Fortress
     }
 
     /**
-     * Revoke Grant.
+     * Destroy Grant.
      *
      * @param int $id
      *
      * @return bool
      */
-    public function revokeGrant($id)
+    public function destroyGrant($id)
     {
         return Grant::where('id', $id)
             ->delete();
