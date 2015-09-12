@@ -87,4 +87,17 @@ class Fortress implements Contracts\Fortress
 
         return $grants;
     }
+
+    /**
+     * Revoke Grant.
+     *
+     * @param int $id
+     *
+     * @return bool
+     */
+    public function revokeGrant($id)
+    {
+        return Grant::where('id', $id)
+            ->delete();
+    }
 }
