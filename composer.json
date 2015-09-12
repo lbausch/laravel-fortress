@@ -1,6 +1,6 @@
 {
-  "name": "lb/laravel-fortress2",
-  "description": "Resource Based Access Control",
+  "name": "lbausch/laravel-fortress",
+  "description": "Roles and Permissions for Laravel's Authorization",
   "license": "MIT",
   "authors": [
     {
