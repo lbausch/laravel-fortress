@@ -50,20 +50,24 @@ class Guard implements FortressGuardContract
 
         // If the model has relations, also fetch the related Grants
         if (method_exists($this->model, 'fortress_relations')) {
-            $this->relations = Grant::where(function ($query) {
+            $fortress_relations = $this->model->fortress_relations();
 
-                foreach ($this->model->fortress_relations() as $relation) {
-                    $query->orWhere(function ($query_model) use ($relation) {
+            if ($fortress_relations->count() > 0) {
+                $this->relations = Grant::where(function ($query) use ($fortress_relations) {
 
-                        $model_type = get_class($relation);
-                        $model_id = $relation->getKey();
+                    foreach ($fortress_relations as $relation) {
+                        $query->orWhere(function ($query_model) use ($relation) {
 
-                        $query_model->where('model_type', $model_type)
-                            ->where('model_id', $model_id);
-                    });
-                }
+                            $model_type = get_class($relation);
+                            $model_id = $relation->getKey();
 
-            })->get();
+                            $query_model->where('model_type', $model_type)
+                                ->where('model_id', $model_id);
+                        });
+                    }
+
+                })->get();
+            }
         }
 
         // Fallback: Initialize Model relations with empty Collection
