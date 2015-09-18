@@ -12,6 +12,7 @@ class VerifyGlobalPermission
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure                 $next
+     * @param string                   $permission_name
      *
      * @throws HttpException
      *
@@ -19,7 +20,7 @@ class VerifyGlobalPermission
      */
     public function handle($request, Closure $next, $permission_name)
     {
-        if (!$request->user()->hasGlobalPermission($permission_name)) {
+        if (!$request->user()->hasPermission($permission_name)) {
             throw new HttpException(403, 'This action is unauthorized.');
         }
 

@@ -45,7 +45,7 @@ class Grant extends Model
     /**
      * Get Model Id.
      *
-     * @return int
+     * @return mixed
      */
     public function getModelId()
     {
@@ -60,5 +60,25 @@ class Grant extends Model
     public function getRole()
     {
         return $this->role;
+    }
+
+    /**
+     * Get Resource type.
+     *
+     * @return string
+     */
+    public function getResourceType()
+    {
+        return $this->resource_type;
+    }
+
+    /**
+     * Get Resource id.
+     *
+     * @return mixed
+     */
+    public function getResourceId()
+    {
+        return $this->resource_id;
     }
 }

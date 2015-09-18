@@ -18,6 +18,8 @@ class Fortress implements Contracts\Fortress
 
     /**
      * Fortress constructor.
+     *
+     * @param GateContract $gate
      */
     public function __construct(GateContract $gate)
     {

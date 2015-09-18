@@ -91,68 +91,31 @@ trait FortressGuardTrait
     }
 
     /**
-     * Has global Permission.
-     *
-     * @param string $permission_name
-     *
-     * @return bool
-     */
-    public function hasGlobalPermission($permission_name)
-    {
-        return $this->callFortressGuard()
-            ->canGlobal($permission_name);
-    }
-
-    /**
-     * Can global.
-     *
-     * @param string $ability
-     *
-     * @return bool
-     */
-    public function canGlobal($ability)
-    {
-        return $this->callFortressGuard()
-            ->canGlobal($ability);
-    }
-
-    /**
-     * Can not global.
-     *
-     * @param $ability
-     *
-     * @return bool
-     */
-    public function cannotGlobal($ability)
-    {
-        return !$this->canGlobal($ability);
-    }
-
-    /**
      * Assign Role.
      *
-     * @param string $role_name
-     * @param object $resource
+     * @param string      $role_name
+     * @param object|null $resource
      *
      * @return bool
      */
-    public function assignRole($role_name, $resource)
+    public function assignRole($role_name, $resource = null)
     {
         return $this->callFortressGuard()
             ->assignRole($role_name, $resource);
     }
 
     /**
-     * Assign global Role.
+     * Has Role.
      *
-     * @param string $role_name
+     * @param string      $role_name
+     * @param object|null $resource
      *
      * @return bool
      */
-    public function assignGlobalRole($role_name)
+    public function hasRole($role_name, $resource = null)
     {
         return $this->callFortressGuard()
-            ->assignGlobalRole($role_name);
+            ->hasRole($role_name, $resource);
     }
 
     /**
@@ -163,36 +126,9 @@ trait FortressGuardTrait
      *
      * @return bool
      */
-    public function revokeRole($role_name, $resource)
+    public function revokeRole($role_name, $resource = null)
     {
         return $this->callFortressGuard()
             ->revokeRole($role_name, $resource);
-    }
-
-    /**
-     * Has Role.
-     *
-     * @param string $role_name
-     * @param object $resource
-     *
-     * @return bool
-     */
-    public function hasRole($role_name, $resource)
-    {
-        return $this->callFortressGuard()
-            ->hasRole($role_name, $resource);
-    }
-
-    /**
-     * Has global Role.
-     *
-     * @param string $role_name
-     *
-     * @return bool
-     */
-    public function hasGlobalRole($role_name)
-    {
-        return $this->callFortressGuard()
-            ->hasGlobalRole($role_name);
     }
 }

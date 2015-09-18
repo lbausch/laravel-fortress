@@ -4,11 +4,10 @@ namespace Bausch\LaravelFortress;
 
 use Closure;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
-use Bausch\LaravelFortress\Contracts\FortressGuard as GuardContract;
+use Bausch\LaravelFortress\Contracts\FortressGuardContract;
 use Bausch\LaravelFortress\Models\Grant;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
-class Guard implements GuardContract
+class Guard implements FortressGuardContract
 {
     /**
      * Gate instance.
@@ -41,173 +40,44 @@ class Guard implements GuardContract
     /**
      * FortressGuard constructor.
      *
-     * @param object $model
+     * @param object       $model
+     * @param GateContract $gate
      */
-    public function __construct($model)
+    public function __construct($model, GateContract $gate)
     {
         $this->model = $model;
+        $this->gate = $gate;
 
-        // If the model has relations, also fetch their Grants
+        // If the model has relations, also fetch the related Grants
         if (method_exists($this->model, 'fortress_relations')) {
-            $model_relations = $this->model->fortress_relations();
+            $this->relations = Grant::where(function ($query) {
 
-            if ($model_relations->count() > 0) {
-                $this->relations = Grant::where(function ($query) use ($model_relations) {
-                    foreach ($model_relations as $relation) {
-                        $query->orWhere(function ($q2) use ($relation) {
-                            $q2->where('model_type', get_class($relation))
-                                ->where('model_id', $relation->getKey());
-                        });
-                    }
-                })->get();
-            }
+                foreach ($this->model->fortress_relations() as $relation) {
+                    $query->orWhere(function ($query_model) use ($relation) {
+
+                        $model_type = get_class($relation);
+                        $model_id = $relation->getKey();
+
+                        $query_model->where('model_type', $model_type)
+                            ->where('model_id', $model_id);
+                    });
+                }
+
+            })->get();
         }
 
-        // Fallback: Initialize model relations with empty collection
+        // Fallback: Initialize Model relations with empty Collection
         if (!$this->relations) {
             $this->relations = collect();
         }
 
-        // Get a new Gate instance
-        $this->gate = app(GateContract::class);
+        // Get all Grants for the Model
+        $model_type = get_class($this->model);
+        $model_id = $this->model->getKey();
 
-        // Get all Grants for the model
-        $this->grants = Grant::where('model_type', get_class($this->model))
-            ->where('model_id', $this->model->getKey())
+        $this->grants = Grant::where('model_type', $model_type)
+            ->where('model_id', $model_id)
             ->get();
-    }
-
-    /**
-     * Authorize global.
-     *
-     * @param string $ability
-     *
-     * @throws HttpException
-     */
-    public function authorizeGlobal($ability)
-    {
-        if (!$this->canGlobal($ability)) {
-            throw new HttpException(403, 'This action is unauthorized.');
-        }
-    }
-
-    /**
-     * Has Permission.
-     *
-     * @param string|object|null $permission_name
-     * @param object|null        $resource
-     *
-     * @return bool
-     */
-    public function hasPermission($permission_name = null, $resource = null)
-    {
-        if (is_object($permission_name) && is_null($resource)) {
-            $resource = $permission_name;
-            $permission_name = debug_backtrace(false, 3)[2]['function'];
-        }
-
-        $policy = $this->gate->getPolicyFor($resource);
-
-        if (!method_exists($policy, 'fortress_roles')) {
-            return false;
-        }
-
-        $roles = [];
-
-        foreach ($policy->fortress_roles() as $role_name => $permissions) {
-            if (in_array($permission_name, $permissions)) {
-                $roles[] = $role_name;
-            }
-        }
-
-        foreach ($this->grants as $grant) {
-            if (in_array($grant->role, $roles) && $grant->resource_type === get_class($resource) && $grant->resource_id == $resource->getKey()) {
-                return true;
-            }
-        }
-
-        foreach ($this->relations as $grant) {
-            if (in_array($grant->role, $roles) && $grant->resource_type === get_class($resource) && $grant->resource_id == $resource->getKey()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Can global.
-     *
-     * @param string $ability
-     *
-     * @return bool
-     */
-    public function canGlobal($ability)
-    {
-        $global_roles = config('fortress.global_roles', []);
-
-        $roles = [];
-
-        foreach ($global_roles as $role_name => $abilities) {
-            if (in_array($ability, $abilities)) {
-                $roles[] = $role_name;
-            }
-        }
-
-        $filtered = $this->grants->filter(function ($grant) use ($roles) {
-            if (is_null($grant->resouce_type) && is_null($grant->resource_id) && in_array($grant->role, $roles)) {
-                return true;
-            }
-
-            return false;
-        });
-
-        return $filtered->count() > 0 ? true : false;
-    }
-
-    /**
-     * Assign Role.
-     *
-     * @param string $role_name
-     * @param object $resource
-     *
-     * @return bool
-     */
-    public function assignRole($role_name, $resource)
-    {
-        if ($this->hasRole($role_name, $resource)) {
-            return true;
-        }
-
-        $grant = new Grant();
-        $grant->model_type = get_class($this->model);
-        $grant->model_id = $this->model->getKey();
-        $grant->role = $role_name;
-        $grant->resource_type = get_class($resource);
-        $grant->resource_id = $resource->getKey();
-
-        return $grant->save();
-    }
-
-    /**
-     * Assign global Role.
-     *
-     * @param string $role_name
-     *
-     * @return bool
-     */
-    public function assignGlobalRole($role_name)
-    {
-        if ($this->hasGlobalRole($role_name)) {
-            return true;
-        }
-
-        $grant = new Grant();
-        $grant->model_type = get_class($this->model);
-        $grant->model_id = $this->model->getKey();
-        $grant->role = $role_name;
-
-        return $grant->save();
     }
 
     /**
@@ -239,7 +109,7 @@ class Guard implements GuardContract
         }
 
         $grants = $this->grants->merge($this->relations)->filter(function ($grant) use ($roles, $model_class_name) {
-            if (in_array($grant->role, $roles) && $grant->resource_type === $model_class_name) {
+            if (in_array($grant->getRole(), $roles) && $grant->getResourceType() === $model_class_name) {
                 return true;
             }
 
@@ -265,34 +135,144 @@ class Guard implements GuardContract
     }
 
     /**
-     * Revoke role.
+     * Has Role.
+     *
+     * @param string $role_name
+     * @param object $resource
+     *
+     * @throws \Exception
+     *
+     * @return bool
+     */
+    public function hasRole($role_name, $resource = null)
+    {
+        if (!is_null($resource) && !is_object($resource)) {
+            throw new \Exception('Invalid Resource');
+        }
+
+        // Check all Grants the Model has
+        foreach ($this->grants as $grant) {
+            if ($this->checkGrant($grant, $role_name, $resource)) {
+                return true;
+            }
+        }
+
+        // Also check relations
+        foreach ($this->relations as $grant) {
+            if ($this->checkGrant($grant, $role_name, $resource)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Has Permission.
+     *
+     * @param string|object|null $permission_name
+     * @param object|null        $resource
+     *
+     * @return bool
+     */
+    public function hasPermission($permission_name = null, $resource = null)
+    {
+        if (is_object($permission_name) && is_null($resource)) {
+            $resource = $permission_name;
+            $permission_name = debug_backtrace(false, 3)[2]['function'];
+        }
+
+        $roles = [];
+
+        if (is_string($permission_name) && is_null($resource)) {
+            $roles_tmp = config('laravel-fortress', []);
+        } else {
+            $policy = $this->gate->getPolicyFor($resource);
+
+            if (!method_exists($policy, 'fortress_roles')) {
+                return false;
+            }
+
+            $roles_tmp = $policy->fortress_roles();
+        }
+
+        foreach ($roles_tmp as $role_name => $permissions) {
+            if (in_array($permission_name, $permissions)) {
+                $roles[] = $role_name;
+            }
+        }
+
+        foreach ($roles as $role_name) {
+            if ($this->hasRole($role_name, $resource)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Assign Role.
      *
      * @param string $role_name
      * @param object $resource
      *
      * @return bool
      */
-    public function revokeRole($role_name, $resource)
+    public function assignRole($role_name, $resource = null)
+    {
+        if ($this->hasRole($role_name, $resource)) {
+            return true;
+        }
+
+        $grant = new Grant();
+        $grant->model_type = get_class($this->model);
+        $grant->model_id = $this->model->getKey();
+        $grant->role = $role_name;
+
+        if (is_object($resource)) {
+            $grant->resource_type = get_class($resource);
+            $grant->resource_id = $resource->getKey();
+        }
+
+        return $grant->save();
+    }
+
+    /**
+     * Revoke role.
+     *
+     * @param string      $role_name
+     * @param object|null $resource
+     *
+     * @return bool
+     */
+    public function revokeRole($role_name, $resource = null)
     {
         // Search Grants in Cache
         $delete_grants = $this->grants->filter(function ($grant) use ($role_name, $resource) {
-            if ($grant->role === $role_name && $grant->resource_type === get_class($resource) && $grant->resource_id == $resource->getKey()) {
-                return true;
-            }
-
-            return false;
+            return $this->checkGrant($grant, $role_name, $resource);
         });
 
         if (!$delete_grants->count()) {
             return true;
         }
 
-        $delete = Grant::where('model_type', get_class($this->model))
-            ->where('model_id', $this->model->getKey())
-            ->where('role', $role_name)
-            ->where('resource_type', get_class($resource))
-            ->where('resource_id', $resource->getKey())
-            ->delete();
+        $model_type = get_class($this->model);
+        $model_id = $this->model->getKey();
+
+        $delete = Grant::where('model_type', $model_type)
+            ->where('model_id', $model_id)
+            ->where('role', $role_name);
+
+        if (is_object($resource)) {
+            $resource_type = get_class($resource);
+            $resource_id = $resource->getKey();
+
+            $delete->where('resource_type', $resource_type)
+                ->where('resource_id', $resource_id);
+        }
+
+        $delete->delete();
 
         foreach ($delete_grants->pluck('id') as $id) {
             $this->grants->forget($id);
@@ -302,55 +282,73 @@ class Guard implements GuardContract
     }
 
     /**
-     * Has Role.
-     *
-     * @param string $role_name
-     * @param object $resource
-     *
-     * @return bool
-     */
-    public function hasRole($role_name, $resource)
-    {
-        $filtered = $this->grants->filter(function ($grant) use ($role_name, $resource) {
-            if ($grant->role === $role_name && $grant->resource_type === get_class($resource) && $grant->resource_id == $resource->getKey()) {
-                return true;
-            }
-
-            return false;
-        });
-
-        return $filtered->count() > 0 ? true : false;
-    }
-
-    /**
-     * Has global Role.
-     *
-     * @param string $role_name
-     *
-     * @return bool
-     */
-    public function hasGlobalRole($role_name)
-    {
-        $filtered = $this->grants->filter(function ($grant) use ($role_name) {
-            if (is_null($grant->resource_type) && is_null($grant->resource_id) && $grant->role === $role_name) {
-                return true;
-            }
-
-            return false;
-        });
-
-        return $filtered->count() > 0 ? true : false;
-    }
-
-    /**
      * Destroy all Grants.
      *
      * @return bool
      */
     public function destroyGrants()
     {
-        return Grant::where('model_type', get_class($this->model))
-            ->where('model_id', $this->model->getKey())
+        $model_type = get_class($this->model);
+        $model_id = $this->model->getKey();
+
+        return Grant::where('model_type', $model_type)
+            ->where('model_id', $model_id)
             ->delete();
+    }
+
+    /**
+     * Check Grant.
+     *
+     * @param Grant       $grant
+     * @param string      $role_name
+     * @param object|null $resource
+     *
+     * @return bool
+     */
+    private function checkGrant(Grant $grant, $role_name, $resource = null)
+    {
+        if (is_null($resource)) {
+            return $this->checkGlobalRole($grant, $role_name);
+        }
+
+        return $this->checkRole($grant, $role_name, $resource);
+    }
+
+    /**
+     * Check Role.
+     *
+     * @param Grant  $grant
+     * @param string $role_name
+     * @param object $resource
+     *
+     * @return bool
+     */
+    private function checkRole(Grant $grant, $role_name, $resource)
+    {
+        $resource_type = get_class($resource);
+        $resource_id = $resource->getKey();
+
+        if ($grant->getRole() === $role_name && $grant->getResourceType() === $resource_type && $grant->getResourceId() == $resource_id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check global Role.
+     *
+     * @param Grant  $grant
+     * @param string $role_name
+     *
+     * @return bool
+     */
+    private function checkGlobalRole(Grant $grant, $role_name)
+    {
+        if ($grant->getRole() === $role_name && is_null($grant->getResourceType()) && is_null($grant->getResourceId())) {
+            return true;
+        }
+
+        return false;
     }
 }
