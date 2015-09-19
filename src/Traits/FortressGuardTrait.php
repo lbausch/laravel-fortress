@@ -62,18 +62,18 @@ trait FortressGuardTrait
     }
 
     /**
-     * Get allowed resources.
+     * Get allowed Resources.
      *
      * @param string       $permission_name
-     * @param string       $model_class_name
+     * @param string       $resource_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($permission_name, $model_class_name, Closure $resolver = null)
+    public function myAllowedResources($permission_name, $resource_class_name, Closure $resolver = null)
     {
         return $this->callFortressGuard()
-            ->myAllowedResources($permission_name, $model_class_name, $resolver);
+            ->myAllowedResources($permission_name, $resource_class_name, $resolver);
     }
 
     /**

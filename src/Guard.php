@@ -60,14 +60,14 @@ class Guard implements FortressGuardContract
      * Get all resources on which the model has the requested permission.
      *
      * @param string       $permission_name
-     * @param string       $model_class_name
+     * @param string       $resource_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($permission_name, $model_class_name, Closure $resolver = null)
+    public function myAllowedResources($permission_name, $resource_class_name, Closure $resolver = null)
     {
-        $policy_instance = $this->gate->getPolicyFor($model_class_name);
+        $policy_instance = $this->gate->getPolicyFor($resource_class_name);
 
         $policy_roles = $policy_instance->fortress_roles();
 
@@ -84,8 +84,8 @@ class Guard implements FortressGuardContract
             return collect();
         }
 
-        $roles = $this->roles->merge($this->relations)->filter(function ($role) use ($check_roles, $model_class_name) {
-            if (in_array($role->getRoleName(), $check_roles) && $role->getResourceType() === $model_class_name) {
+        $roles = $this->roles->merge($this->relations)->filter(function ($role) use ($check_roles, $resource_class_name) {
+            if (in_array($role->getRoleName(), $check_roles) && $role->getResourceType() === $resource_class_name) {
                 return true;
             }
 
