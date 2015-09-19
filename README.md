@@ -159,7 +159,7 @@ $readable_blogs = $user->myAllowedResources('read', Blog::class);
 ```
 This method will return all Blogs where the User has the "read" Permission.
 
-**Important:** The `myAllowedResources` method is quite limited when it comes to resolving the requested Resources as it produdes *a lot* of queries (one for every found Resource). Luckily you can pass in a Closure as the third argument and come up with your own resolving logic: 
+**Important:** The `myAllowedResources` method is quite limited when it comes to resolving the requested Resources as it produces *a lot* of queries (one for every found Resource). Luckily you can pass in a Closure as the third argument and come up with your own resolving logic (e.g. also retrieve certain relations):
 
 ```php
 $readable_blogs = $user->myAllowedResources('read', Blog::class, function($resources) {
@@ -176,6 +176,8 @@ $users_who_can_read_this_blog = \Fortress::allowedModels('read', $blog_instance'
 ```
 
 Of course `allowedModels()` also accepts a Closure as the third argument allowing you to use your own resolving logic.
+
+If you want to use Dependency Injection use `\Bausch\LaravelFortress\Contracts\Fortress::class`.
 
 ### A Note on deleting Models
 Fortress hooks into the deleting process of a Model. This means if you delete a Model from your database which uses the `FortressGuardTrait` all assigned Roles will be deleted from the database. In case your Model makes use of the Soft Deletes feature all assigned Roles are kept until your Model is deleted permanently.
