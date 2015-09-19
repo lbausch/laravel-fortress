@@ -4,7 +4,7 @@ namespace Bausch\LaravelFortress;
 
 use Closure;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
-use Bausch\LaravelFortress\Models\Grant;
+use Bausch\LaravelFortress\Models\Role;
 use Illuminate\Support\Collection;
 
 class Fortress implements Contracts\Fortress
@@ -41,33 +41,33 @@ class Fortress implements Contracts\Fortress
 
         $policy_roles = $policy->fortress_roles();
 
-        $roles = [];
+        $check_roles = [];
 
         foreach ($policy_roles as $role_name => $permissions) {
             if (in_array($permission_name, $permissions)) {
-                $roles[] = $role_name;
+                $check_roles[] = $role_name;
             }
         }
 
-        $grants = Grant::whereIn('role', $roles)
+        $roles = Role::whereIn('role', $check_roles)
             ->where('resource_type', get_class($resource))
             ->where('resource_id', $resource->getKey())
             ->get();
 
         if ($resolver) {
-            return $resolver($grants);
+            return $resolver($roles);
         }
 
-        $return = collect();
+        $collection = collect();
 
-        foreach ($grants as $grant) {
-            $tmp = app($grant->model_type);
-            $tmp->find($grant->model_id);
+        foreach ($roles as $role) {
+            $tmp_instance = app($role->getModelType());
+            $tmp_instance->find($role->getModelId());
 
-            $return->push($tmp);
+            $collection->push($tmp_instance);
         }
 
-        return $return;
+        return $collection;
     }
 
     /**
@@ -78,28 +78,26 @@ class Fortress implements Contracts\Fortress
      */
     public function modelsForResource($resource, $filter_class = null)
     {
-        $grants = Grant::where('resource_type', get_class($resource))
+        $roles = Role::where('resource_type', get_class($resource))
             ->where('resource_id', $resource->getKey());
 
         if (!is_null($filter_class)) {
-            $grants->where('model_type', $filter_class);
+            $roles->where('model_type', $filter_class);
         }
 
-        $grants = $grants->get();
-
-        return $grants;
+        return $roles->get();
     }
 
     /**
-     * Destroy Grant.
+     * Destroy Role.
      *
      * @param int $id
      *
      * @return bool
      */
-    public function destroyGrant($id)
+    public function destroyRole($id)
     {
-        return Grant::where('id', $id)
+        return Role::findOrFail($id)
             ->delete();
     }
 }

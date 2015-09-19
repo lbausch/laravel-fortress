@@ -2,10 +2,11 @@
 
 namespace Bausch\LaravelFortress;
 
+use Bausch\LaravelFortress\Models\Role;
 use Closure;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Bausch\LaravelFortress\Contracts\FortressGuardContract;
-use Bausch\LaravelFortress\Models\Grant;
+use Illuminate\Support\Collection;
 
 class Guard implements FortressGuardContract
 {
@@ -17,11 +18,11 @@ class Guard implements FortressGuardContract
     protected $gate;
 
     /**
-     * All Grants the guarded Model has.
+     * All Roles the guarded Model has.
      *
      * @var \Illuminate\Support\Collection
      */
-    protected $grants;
+    protected $roles;
 
     /**
      * The Model which the Guard protects.
@@ -48,72 +49,43 @@ class Guard implements FortressGuardContract
         $this->model = $model;
         $this->gate = $gate;
 
-        // If the model has relations, also fetch the related Grants
-        if (method_exists($this->model, 'fortress_relations')) {
-            $fortress_relations = $this->model->fortress_relations();
+        // Initialize Roles for the Model
+        $this->roles = $this->initRoles();
 
-            if ($fortress_relations->count() > 0) {
-                $this->relations = Grant::where(function ($query) use ($fortress_relations) {
-
-                    foreach ($fortress_relations as $relation) {
-                        $query->orWhere(function ($query_model) use ($relation) {
-
-                            $model_type = get_class($relation);
-                            $model_id = $relation->getKey();
-
-                            $query_model->where('model_type', $model_type)
-                                ->where('model_id', $model_id);
-                        });
-                    }
-
-                })->get();
-            }
-        }
-
-        // Fallback: Initialize Model relations with empty Collection
-        if (!$this->relations) {
-            $this->relations = collect();
-        }
-
-        // Get all Grants for the Model
-        $model_type = get_class($this->model);
-        $model_id = $this->model->getKey();
-
-        $this->grants = Grant::where('model_type', $model_type)
-            ->where('model_id', $model_id)
-            ->get();
+        // Initialize Model relations
+        $this->relations = $this->initRelations();
     }
 
     /**
-     * Get all resources on which the model has the requested ability.
+     * Get all resources on which the model has the requested permission.
      *
-     * @param string       $ability
+     * @param string       $permission_name
      * @param string       $model_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($ability, $model_class_name, Closure $resolver = null)
+    public function myAllowedResources($permission_name, $model_class_name, Closure $resolver = null)
     {
         $policy_instance = $this->gate->getPolicyFor($model_class_name);
 
         $policy_roles = $policy_instance->fortress_roles();
 
         // Try to find Roles
-        $roles = [];
+        $check_roles = [];
 
         foreach ($policy_roles as $role_name => $abilities) {
-            if (in_array($ability, $abilities)) {
-                $roles[] = $role_name;
+            if (in_array($permission_name, $abilities)) {
+                $check_roles[] = $role_name;
             }
         }
 
-        if (empty($roles)) {
+        if (empty($check_roles)) {
             return collect();
         }
 
-        $grants = $this->grants->merge($this->relations)->filter(function ($grant) use ($roles, $model_class_name) {
-            if (in_array($grant->getRole(), $roles) && $grant->getResourceType() === $model_class_name) {
+        $roles = $this->roles->merge($this->relations)->filter(function ($role) use ($check_roles, $model_class_name) {
+            if (in_array($role->getRoleName(), $check_roles) && $role->getResourceType() === $model_class_name) {
                 return true;
             }
 
@@ -121,14 +93,14 @@ class Guard implements FortressGuardContract
         });
 
         if ($resolver) {
-            return $resolver($grants);
+            return $resolver($roles);
         }
 
         $return = collect();
 
-        foreach ($grants as $grant) {
-            $tmp = app($grant->resource_type);
-            $tmp = $tmp->find($grant->resource_id);
+        foreach ($roles as $role) {
+            $tmp = app($role->getResourceType());
+            $tmp = $tmp->find($role->getResourceId());
 
             if ($tmp->getKey()) {
                 $return->push($tmp);
@@ -154,16 +126,16 @@ class Guard implements FortressGuardContract
             throw new \Exception('Invalid Resource');
         }
 
-        // Check all Grants the Model has
-        foreach ($this->grants as $grant) {
-            if ($this->checkGrant($grant, $role_name, $resource)) {
+        // Check all Roles the Model has
+        foreach ($this->roles as $role) {
+            if ($this->checkRole($role, $role_name, $resource)) {
                 return true;
             }
         }
 
         // Also check relations
-        foreach ($this->relations as $grant) {
-            if ($this->checkGrant($grant, $role_name, $resource)) {
+        foreach ($this->relations as $role) {
+            if ($this->checkRole($role, $role_name, $resource)) {
                 return true;
             }
         }
@@ -186,7 +158,7 @@ class Guard implements FortressGuardContract
             $permission_name = debug_backtrace(false, 3)[2]['function'];
         }
 
-        $roles = [];
+        $check_roles = [];
 
         if (is_string($permission_name) && is_null($resource)) {
             $roles_tmp = config('laravel-fortress', []);
@@ -202,11 +174,11 @@ class Guard implements FortressGuardContract
 
         foreach ($roles_tmp as $role_name => $permissions) {
             if (in_array($permission_name, $permissions)) {
-                $roles[] = $role_name;
+                $check_roles[] = $role_name;
             }
         }
 
-        foreach ($roles as $role_name) {
+        foreach ($check_roles as $role_name) {
             if ($this->hasRole($role_name, $resource)) {
                 return true;
             }
@@ -229,17 +201,15 @@ class Guard implements FortressGuardContract
             return true;
         }
 
-        $grant = new Grant();
-        $grant->model_type = get_class($this->model);
-        $grant->model_id = $this->model->getKey();
-        $grant->role = $role_name;
+        $role = app(Role::class);
+        $role->setModel($this->model);
+        $role->setRoleName($role_name);
 
         if (is_object($resource)) {
-            $grant->resource_type = get_class($resource);
-            $grant->resource_id = $resource->getKey();
+            $role->setResource($resource);
         }
 
-        return $grant->save();
+        return $role->save();
     }
 
     /**
@@ -252,19 +222,19 @@ class Guard implements FortressGuardContract
      */
     public function revokeRole($role_name, $resource = null)
     {
-        // Search Grants in Cache
-        $delete_grants = $this->grants->filter(function ($grant) use ($role_name, $resource) {
-            return $this->checkGrant($grant, $role_name, $resource);
+        // Search Roles in Cache
+        $delete_roles = $this->roles->filter(function ($role) use ($role_name, $resource) {
+            return $this->checkRole($role, $role_name, $resource);
         });
 
-        if (!$delete_grants->count()) {
+        if (!$delete_roles->count()) {
             return true;
         }
 
         $model_type = get_class($this->model);
         $model_id = $this->model->getKey();
 
-        $delete = Grant::where('model_type', $model_type)
+        $delete = Role::where('model_type', $model_type)
             ->where('model_id', $model_id)
             ->where('role', $role_name);
 
@@ -278,61 +248,117 @@ class Guard implements FortressGuardContract
 
         $delete->delete();
 
-        foreach ($delete_grants->pluck('id') as $id) {
-            $this->grants->forget($id);
+        foreach ($delete_roles->pluck('id') as $id) {
+            $this->roles->forget($id);
         }
 
         return $delete;
     }
 
     /**
-     * Destroy all Grants.
+     * Destroy all Model Roles.
      *
      * @return bool
      */
-    public function destroyGrants()
+    public function destroyRoles()
     {
         $model_type = get_class($this->model);
         $model_id = $this->model->getKey();
 
-        return Grant::where('model_type', $model_type)
+        return Role::where('model_type', $model_type)
             ->where('model_id', $model_id)
             ->delete();
     }
 
     /**
-     * Check Grant.
+     * Initialize Roles.
      *
-     * @param Grant       $grant
-     * @param string      $role_name
-     * @param object|null $resource
-     *
-     * @return bool
+     * @return \Illuminate\Support\Collection
      */
-    private function checkGrant(Grant $grant, $role_name, $resource = null)
+    private function initRoles()
     {
-        if (is_null($resource)) {
-            return $this->checkGlobalRole($grant, $role_name);
+        $model_type = get_class($this->model);
+        $model_id = $this->model->getKey();
+
+        return Role::where('model_type', $model_type)
+            ->where('model_id', $model_id)
+            ->get();
+    }
+
+    /**
+     * Initialize Model relations.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    private function initRelations()
+    {
+        // If the model has relations, also fetch the related Roles
+        if (!method_exists($this->model, 'fortress_relations')) {
+            return collect();
         }
 
-        return $this->checkRole($grant, $role_name, $resource);
+        $fortress_relations = $this->model->fortress_relations();
+
+        if (!$fortress_relations->count()) {
+            return collect();
+        }
+
+        $relations = Role::where(function ($query) use ($fortress_relations) {
+
+            foreach ($fortress_relations as $relation) {
+                $query->orWhere(function ($query_model) use ($relation) {
+
+                    $model_type = get_class($relation);
+                    $model_id = $relation->getKey();
+
+                    $query_model->where('model_type', $model_type)
+                        ->where('model_id', $model_id);
+                });
+            }
+
+        })->get();
+
+        // Fallback: Initialize Model relations with empty Collection
+        if (!$relations) {
+            return  collect();
+        }
+
+        return $relations;
     }
 
     /**
      * Check Role.
      *
-     * @param Grant  $grant
+     * @param Role        $role
+     * @param string      $role_name
+     * @param object|null $resource
+     *
+     * @return bool
+     */
+    private function checkRole(Role $role, $role_name, $resource = null)
+    {
+        if (is_null($resource)) {
+            return $this->checkGlobalRole($role, $role_name);
+        }
+
+        return $this->checkResourceRole($role, $role_name, $resource);
+    }
+
+    /**
+     * Check Role.
+     *
+     * @param Role   $role
      * @param string $role_name
      * @param object $resource
      *
      * @return bool
      */
-    private function checkRole(Grant $grant, $role_name, $resource)
+    private function checkResourceRole(Role $role, $role_name, $resource)
     {
         $resource_type = get_class($resource);
         $resource_id = $resource->getKey();
 
-        if ($grant->getRole() === $role_name && $grant->getResourceType() === $resource_type && $grant->getResourceId() == $resource_id) {
+        if ($role->getRoleName() === $role_name && $role->getResourceType() === $resource_type && $role->getResourceId() == $resource_id) {
             return true;
         }
 
@@ -342,14 +368,14 @@ class Guard implements FortressGuardContract
     /**
      * Check global Role.
      *
-     * @param Grant  $grant
+     * @param Role   $role
      * @param string $role_name
      *
      * @return bool
      */
-    private function checkGlobalRole(Grant $grant, $role_name)
+    private function checkGlobalRole(Role $role, $role_name)
     {
-        if ($grant->getRole() === $role_name && is_null($grant->getResourceType()) && is_null($grant->getResourceId())) {
+        if ($role->getRoleName() === $role_name && is_null($role->getResourceType()) && is_null($role->getResourceId())) {
             return true;
         }
 

@@ -25,12 +25,12 @@ trait FortressGuardTrait
         if (in_array(SoftDeletes::class, class_uses(self::class))) {
             static::deleted(function ($model) {
                 if (!$model->trashed()) {
-                    $model->destroyGrants();
+                    $model->destroyRoles();
                 }
             });
         } else {
             static::deleted(function ($model) {
-                $model->destroyGrants();
+                $model->destroyRoles();
             });
         }
     }
@@ -51,29 +51,29 @@ trait FortressGuardTrait
     }
 
     /**
-     * Destroy all Grants.
+     * Destroy all Roles.
      *
      * @return bool
      */
-    public function destroyGrants()
+    public function destroyRoles()
     {
         return $this->callFortressGuard()
-            ->destroyGrants();
+            ->destroyRoles();
     }
 
     /**
-     * Get granted resources.
+     * Get allowed resources.
      *
-     * @param string       $ability
+     * @param string       $permission_name
      * @param string       $model_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($ability, $model_class_name, Closure $resolver = null)
+    public function myAllowedResources($permission_name, $model_class_name, Closure $resolver = null)
     {
         return $this->callFortressGuard()
-            ->myAllowedResources($ability, $model_class_name, $resolver);
+            ->myAllowedResources($permission_name, $model_class_name, $resolver);
     }
 
     /**

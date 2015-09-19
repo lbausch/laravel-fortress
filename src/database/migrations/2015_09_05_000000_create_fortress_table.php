@@ -8,7 +8,7 @@ class CreateFortressTable extends Migration
     /**
      * Table name.
      */
-    const TABLE = 'fortress_grants';
+    const TABLE = 'fortress_roles';
 
     /**
      * Run the migrations.
@@ -23,7 +23,7 @@ class CreateFortressTable extends Migration
             $table->string('model_type');
             $table->string('model_id');
 
-            $table->string('role');
+            $table->string('role_name');
 
             $table->string('resource_type')
                 ->nullable();

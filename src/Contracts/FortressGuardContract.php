@@ -9,13 +9,13 @@ interface FortressGuardContract
     /**
      * Get all resources on which the Model has the requested ability.
      *
-     * @param string       $ability
+     * @param string       $permission_name
      * @param string       $model_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
      */
-    public function myAllowedResources($ability, $model_class_name, Closure $resolver = null);
+    public function myAllowedResources($permission_name, $model_class_name, Closure $resolver = null);
 
     /**
      * Has Role.
@@ -58,9 +58,9 @@ interface FortressGuardContract
     public function revokeRole($role_name, $resource = null);
 
     /**
-     * Destroy all Grants of the Model.
+     * Destroy all Roles of the Model.
      *
      * @return bool
      */
-    public function destroyGrants();
+    public function destroyRoles();
 }

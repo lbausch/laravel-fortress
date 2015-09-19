@@ -20,14 +20,14 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         ], 'migrations');
 
         // Publish config file
-        $this->publishes([__DIR__.'/../config/laravle-fortress.php' => config_path('laravel-fortress.php')]);
+        $this->publishes([__DIR__.'/../config/laravel-fortress.php' => config_path('laravel-fortress.php')]);
 
         // Register global Roles and Permissions
-        $roles = config('laravel-fortress', []);
+        $global_roles = config('laravel-fortress', []);
 
         $gate = app(\Illuminate\Contracts\Auth\Access\Gate::class);
 
-        foreach ($roles as $role_name => $permissions) {
+        foreach ($global_roles as $role_name => $permissions) {
             foreach ($permissions as $permission_name) {
                 $gate->define($permission_name, function ($model) use ($permission_name) {
                     return $model->hasPermission($permission_name);
