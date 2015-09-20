@@ -49,7 +49,7 @@ class Fortress implements Contracts\Fortress
             }
         }
 
-        $roles = Role::whereIn('role', $check_roles)
+        $roles = Role::whereIn('role_name', $check_roles)
             ->where('resource_type', get_class($resource))
             ->where('resource_id', $resource->getKey())
             ->get();

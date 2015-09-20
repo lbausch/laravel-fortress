@@ -236,7 +236,7 @@ class Guard implements FortressGuardContract
 
         $delete = Role::where('model_type', $model_type)
             ->where('model_id', $model_id)
-            ->where('role', $role_name);
+            ->where('role_name', $role_name);
 
         if (is_object($resource)) {
             $resource_type = get_class($resource);
