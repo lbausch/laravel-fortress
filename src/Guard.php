@@ -2,11 +2,12 @@
 
 namespace Bausch\LaravelFortress;
 
-use Bausch\LaravelFortress\Models\Role;
-use Closure;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
+use Bausch\LaravelFortress\Models\Role;
 use Bausch\LaravelFortress\Contracts\FortressGuardContract;
+use Bausch\LaravelFortress\Contracts\Fortress as FortressContract;
 use Illuminate\Support\Collection;
+use Closure;
 
 class Guard implements FortressGuardContract
 {
@@ -16,6 +17,13 @@ class Guard implements FortressGuardContract
      * @var GateContract
      */
     protected $gate;
+
+    /**
+     * Fortress.
+     *
+     * @var FortressContract
+     */
+    protected $fortress;
 
     /**
      * All Roles the guarded Model has.
@@ -44,10 +52,11 @@ class Guard implements FortressGuardContract
      * @param object       $model
      * @param GateContract $gate
      */
-    public function __construct($model, GateContract $gate)
+    public function __construct($model, GateContract $gate, FortressContract $fortress)
     {
-        $this->model = $model;
         $this->gate = $gate;
+        $this->model = $model;
+        $this->fortress = $fortress;
 
         // Initialize Roles for the Model
         $this->roles = $this->initRoles();
@@ -161,7 +170,7 @@ class Guard implements FortressGuardContract
         $check_roles = [];
 
         if (is_string($permission_name) && is_null($resource)) {
-            $roles_tmp = config('laravel-fortress', []);
+            $roles_tmp = $this->fortress->getGlobalRoles();
         } else {
             $policy = $this->gate->getPolicyFor($resource);
 

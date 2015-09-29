@@ -7,6 +7,13 @@ use Closure;
 interface Fortress
 {
     /**
+     * Get global Roles from config file.
+     *
+     * @return array
+     */
+    public function getGlobalRoles();
+
+    /**
      * Which Models have the Permission for a resource?
      *
      * @param string       $permission_name

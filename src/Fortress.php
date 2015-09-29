@@ -27,6 +27,18 @@ class Fortress implements Contracts\Fortress
     }
 
     /**
+     * Get global Roles from config file.
+     *
+     * @return array
+     */
+    public function getGlobalRoles()
+    {
+        $global_roles = config('laravel-fortress', []);
+
+        return $global_roles;
+    }
+
+    /**
      * Which Models have the Permission for a resource?
      *
      * @param string       $permission_name
