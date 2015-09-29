@@ -64,8 +64,8 @@ trait FortressGuardTrait
     /**
      * Get allowed Resources.
      *
-     * @param string       $permission_name
-     * @param string       $resource_class_name
+     * @param string $permission_name
+     * @param string $resource_class_name
      * @param Closure|null $resolver
      *
      * @return Collection
@@ -80,7 +80,7 @@ trait FortressGuardTrait
      * Has Permission.
      *
      * @param string|object|null $name
-     * @param object|null        $resource
+     * @param object|null $resource
      *
      * @return bool
      */
@@ -93,7 +93,7 @@ trait FortressGuardTrait
     /**
      * Assign Role.
      *
-     * @param string      $role_name
+     * @param string $role_name
      * @param object|null $resource
      *
      * @return bool
@@ -107,7 +107,7 @@ trait FortressGuardTrait
     /**
      * Has Role.
      *
-     * @param string      $role_name
+     * @param string $role_name
      * @param object|null $resource
      *
      * @return bool
@@ -116,6 +116,19 @@ trait FortressGuardTrait
     {
         return $this->callFortressGuard()
             ->hasRole($role_name, $resource);
+    }
+
+    /**
+     * Remove Role (alias).
+     *
+     * @param string $role_name
+     * @param object $resource
+     *
+     * @return bool
+     */
+    public function removeRole($role_name, $resource = null)
+    {
+        return $this->revokeRole($role_name, $resource);
     }
 
     /**
