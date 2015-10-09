@@ -112,4 +112,25 @@ class Fortress implements Contracts\Fortress
         return Role::findOrFail($id)
             ->delete();
     }
+
+    /**
+     * Destroy Roles for Resource.
+     *
+     * @param object $resource
+     *
+     * @return bool
+     */
+    public function destroyResource($resource)
+    {
+        if (!is_object($resource)) {
+            return false;
+        }
+
+        $resource_type = get_class($resource);
+        $resource_id = $resource->getKey();
+
+        return Role::where('resource_type', $resource_type)
+            ->where('resource_id', $resource_id)
+            ->delete();
+    }
 }
