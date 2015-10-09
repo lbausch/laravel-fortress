@@ -111,7 +111,7 @@ class Guard implements FortressGuardContract
             $tmp = app($role->getResourceType());
             $tmp = $tmp->find($role->getResourceId());
 
-            if ($tmp->getKey()) {
+            if ($tmp && $tmp->getKey()) {
                 $return->push($tmp);
             }
         }
