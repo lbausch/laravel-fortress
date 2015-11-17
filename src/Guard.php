@@ -218,7 +218,11 @@ class Guard implements FortressGuardContract
             $role->setResource($resource);
         }
 
-        return $role->save();
+        $status = $role->save();
+
+        $this->roles->push($role);
+
+        return $status;
     }
 
     /**
