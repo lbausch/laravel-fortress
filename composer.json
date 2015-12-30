@@ -2,7 +2,13 @@
   "name": "lbausch/laravel-fortress",
   "description": "Roles and Permissions for Laravel's Authorization",
   "license": "MIT",
-  "keywords": ["laravel", "acl", "rbac", "roles", "permissions"],
+  "keywords": [
+    "laravel",
+    "acl",
+    "rbac",
+    "roles",
+    "permissions"
+  ],
   "authors": [
     {
       "name": "Lorenz Bausch",
@@ -20,7 +26,7 @@
     }
   },
   "require": {
-    "laravel/framework": "5.1.*"
+    "laravel/framework": "5.2.*"
   },
   "require-dev": {
     "phpunit/phpunit": "5.*"
