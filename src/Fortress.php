@@ -3,6 +3,7 @@
 namespace Bausch\LaravelFortress;
 
 use Closure;
+use Exception;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Bausch\LaravelFortress\Models\Role;
 use Illuminate\Support\Collection;
@@ -50,6 +51,10 @@ class Fortress implements Contracts\Fortress
     public function allowedModels($permission_name, $resource, Closure $resolver = null)
     {
         $policy = $this->gate->getPolicyFor($resource);
+
+        if(!$policy) {
+            throw new Exception("No policy found");
+        }
 
         $policy_roles = $policy->fortress_roles();
 

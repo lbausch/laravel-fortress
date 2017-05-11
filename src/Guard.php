@@ -2,6 +2,7 @@
 
 namespace Bausch\LaravelFortress;
 
+use Exception;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Bausch\LaravelFortress\Models\Role;
 use Bausch\LaravelFortress\Contracts\FortressGuardContract;
@@ -77,6 +78,10 @@ class Guard implements FortressGuardContract
     public function myAllowedResources($permission_name, $resource_class_name, Closure $resolver = null)
     {
         $policy_instance = $this->gate->getPolicyFor($resource_class_name);
+
+        if(!$policy_instance) {
+            throw new Exception("No policy found");
+        }
 
         $policy_roles = $policy_instance->fortress_roles();
 
@@ -173,6 +178,10 @@ class Guard implements FortressGuardContract
             $roles_tmp = $this->fortress->getGlobalRoles();
         } else {
             $policy = $this->gate->getPolicyFor($resource);
+
+            if(!$policy) {
+                throw new Exception("No policy found");
+            }
 
             if (!method_exists($policy, 'fortress_roles')) {
                 return false;
