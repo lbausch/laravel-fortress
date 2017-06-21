@@ -3,7 +3,7 @@
 namespace Bausch\LaravelFortress;
 
 use Bausch\LaravelFortress\Contracts\Fortress as FortressContract;
-use Bausch\LaravelFortress\Contracts\FortressGuard as GuardContract;
+use Bausch\LaravelFortress\Contracts\FortressGuardContract as GuardContract;
 use Bausch\LaravelFortress\Facades\FortressFacade;
 use Illuminate\Foundation\AliasLoader;
 
