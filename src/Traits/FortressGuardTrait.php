@@ -2,8 +2,8 @@
 
 namespace Bausch\LaravelFortress\Traits;
 
-use Bausch\LaravelFortress\Contracts\FortressGuard;
 use Closure;
+use Bausch\LaravelFortress\Contracts\FortressGuardContract;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
@@ -12,7 +12,7 @@ trait FortressGuardTrait
     /**
      * Fortress Guard instance.
      *
-     * @var FortressGuard
+     * @var FortressGuardContract
      */
     private $fortress_guard;
 
@@ -38,13 +38,15 @@ trait FortressGuardTrait
     /**
      * Call Fortress Guard.
      *
-     * @return FortressGuard
+     * @return FortressGuardContract
      */
     public function callFortressGuard()
     {
         // Simple singleton
         if (!$this->fortress_guard) {
-            $this->fortress_guard = app(FortressGuard::class, [$this]);
+            $this->fortress_guard = app()->makeWith(FortressGuardContract::class, [
+                'model' => $this,
+            ]);
         }
 
         return $this->fortress_guard;
