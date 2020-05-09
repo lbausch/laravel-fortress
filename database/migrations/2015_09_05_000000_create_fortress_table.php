@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateFortressTable extends Migration
 {
@@ -15,17 +16,15 @@ class CreateFortressTable extends Migration
      */
     public function up()
     {
-        // Grants: Roles to Objects
         Schema::create(self::TABLE, function (Blueprint $table) {
-            $table->bigIncrements('id')
-                ->unsigned();
+            $table->bigIncrements('id');
 
-            $table->string('model_type');
+            $table->string('model_class');
             $table->string('model_id');
 
-            $table->string('role_name');
+            $table->string('name');
 
-            $table->string('resource_type')
+            $table->string('resource_class')
                 ->nullable();
             $table->string('resource_id')
                 ->nullable();

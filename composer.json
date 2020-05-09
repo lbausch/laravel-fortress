@@ -1,5 +1,5 @@
 {
-  "name": "lbausch/laravel-fortress",
+  "name": "lbausch/fortress",
   "description": "Roles and Permissions for Laravel's Authorization",
   "license": "MIT",
   "keywords": [
@@ -9,6 +9,10 @@
     "roles",
     "permissions"
   ],
+  "support": {
+    "issues": "https://github.com/lbausch/fortress/issues",
+    "source": "https://github.com/lbausch/fortress"
+  },
   "authors": [
     {
       "name": "Lorenz Bausch",
@@ -17,19 +21,27 @@
   ],
   "autoload": {
     "psr-4": {
-      "Bausch\\LaravelFortress\\": "src/"
+      "Bausch\\Fortress\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Bausch\\LaravelFortress\\Tests\\": "tests/"
+      "Tests\\": "tests/"
     }
   },
   "require": {
-    "laravel/framework": "5.4.*"
+    "laravel/framework": "7.*"
   },
   "require-dev": {
-    "phpunit/phpunit": "5.*"
+    "phpunit/phpunit": "8.*",
+    "orchestra/testbench": "^5.2"
   },
-  "minimum-stability": "stable"
+  "minimum-stability": "stable",
+  "extra": {
+    "laravel": {
+        "providers": [
+            "Bausch\\Fortress\\FortressServiceProvider"
+        ]
+    }
+  }
 }
